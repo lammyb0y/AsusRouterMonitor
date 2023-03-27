@@ -14,6 +14,8 @@ class RouterInfo:
             username : Root user name
             password : Password required to login
         """
+        self.ipAddress = ipaddress
+        self.RootUrl = "http://{}/".format(ipaddress)
         self.url = 'http://{}/appGet.cgi'.format(ipaddress)
         self.headers = None
         self.__authenticate(ipaddress, username, password)
@@ -59,6 +61,34 @@ class RouterInfo:
             except:
                 return None
             return r.text
+        else:
+            return None
+
+    def get_WebHistory(self, client, page, timestamp):
+        """
+        Private get method to query web history
+        Parameters:
+            client : Mac Address of specific client or "all"
+            page : page number requested. Pages contain up to NNN results. Entering "all" returns all results up to the character limit. Incomplete results are trimmed from the results
+            timestamp: Unix timestamp. Can enter blank timestamp. Unsure of use
+        :returns: string web history in an array containing client, timestamp, and domain accessed
+        """
+        if self.headers:
+            payload = "client={}&page={}&_={}".format(client, page, timestamp)
+            try:
+                r = requests.post(url='{}getWebHistory.asp'.format(self.RootUrl), data=payload, headers=self.headers)
+            except:
+                return None
+            result = r.text
+            if "]]" in result:
+                result = result[46:result.index("]]")].replace('"','')
+                result = result.split("], [")
+                history = []
+                for temp in result:
+                    entry = temp.split(", ")
+                    if len(entry) == 3:
+                        history.append(entry)
+                return history
         else:
             return None
 
